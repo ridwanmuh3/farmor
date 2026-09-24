@@ -12,6 +12,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.2",
     "@capacitor/app": "8.1.1",
     "@capacitor/core": "8.5.2",
     "@capacitor/haptics": "8.0.2",
@@ -20,6 +21,7 @@
     "@ionic/react": "^9.0.0",
     "@ionic/react-router": "^9.0.0",
     "ionicons": "^8.1.0",
+    "lucide-react": "^1.47.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-router": "^6.30.0",
@@ -35,6 +37,7 @@
     "@types/react-dom": "19.0.4",
     "@vitejs/plugin-legacy": "^8.0.0",
     "@vitejs/plugin-react": "^6.0.0",
+    "@vitest/coverage-v8": "~4.0.18",
     "cypress": "^13.5.0",
     "eslint": "^9.20.1",
     "eslint-plugin-react": "^7.32.2",

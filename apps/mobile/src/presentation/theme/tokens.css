@@ -1,0 +1,234 @@
+:root {
+  /* Warna diambil dari mockup/mockup/*.svg */
+  --ff-primary: #5b8c2a;
+  --ff-primary-dark: #3b5c14;
+  /* Latar tombol/chip aktif: teks putih di #5b8c2a hanya 4.0:1, di sini 5.4:1. */
+  --ff-primary-strong: #4a751f;
+  --ff-primary-soft: #e5f0a0;
+  --ff-lime: #b5c76a;
+  --ff-surface: #f7fbf2;
+  --ff-card: #ffffff;
+  --ff-text: #1a1a1a;
+  --ff-muted: #666666;
+  --ff-muted-2: #9ca3af;
+  --ff-line: #e5e7eb;
+  --ff-danger: #dc2626;
+  --ff-amber: #b45309;
+  --ff-amber-soft: #fffbeb;
+  --ff-info: #1d4ed8;
+  --ff-info-soft: #eff6ff;
+  --ff-success: #15803d;
+  --ff-success-soft: #f0fdf4;
+
+  --ff-radius-card: 20px;
+  --ff-radius-input: 12px;
+  --ff-radius-pill: 999px;
+  --ff-gap: 16px;
+  --ff-pad: 20px;
+
+  --ff-shadow: 0 10px 12px rgba(91, 140, 42, 0.15);
+  --ff-shadow-soft: 0 6px 8px rgba(0, 0, 0, 0.05);
+
+  --ff-font: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --ion-color-primary: #5b8c2a;
+  --ion-color-primary-rgb: 91, 140, 42;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-shade: #507b25;
+  --ion-color-primary-tint: #6c983f;
+  --ion-background-color: #f7fbf2;
+  --ion-text-color: #1a1a1a;
+  --ion-font-family: var(--ff-font);
+  --ion-tab-bar-background: #ffffff;
+  --ion-tab-bar-border-color: var(--ff-line);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--ff-font);
+  color: var(--ff-text);
+  background: var(--ff-surface);
+}
+
+/* Target sentuh minimum 44px: mockup punya tombol 28px yang terlalu kecil untuk usia 45+ */
+.ff-touch {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ff-screen {
+  padding: 0 var(--ff-pad) 24px;
+}
+
+.ff-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.ff-subtitle {
+  font-size: 14px;
+  color: var(--ff-muted);
+  margin: 4px 0 0;
+}
+
+.ff-section {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 20px 0 12px;
+}
+
+.ff-card {
+  background: var(--ff-card);
+  border: 1px solid var(--ff-line);
+  border-radius: var(--ff-radius-card);
+  padding: 16px;
+}
+
+.ff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ff-input {
+  width: 100%;
+  border: 1px solid var(--ff-line);
+  border-radius: var(--ff-radius-input);
+  background: var(--ff-card);
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--ff-text);
+  font-family: var(--ff-font);
+}
+
+.ff-input:focus {
+  outline: 2px solid var(--ff-primary);
+  outline-offset: -1px;
+}
+
+.ff-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ff-muted);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.ff-btn {
+  width: 100%;
+  min-height: 52px;
+  border: none;
+  border-radius: var(--ff-radius-input);
+  background: var(--ff-primary-strong);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--ff-font);
+  cursor: pointer;
+  box-shadow: var(--ff-shadow);
+}
+
+.ff-btn:disabled {
+  background: var(--ff-line);
+  color: var(--ff-muted-2);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.ff-btn-ghost {
+  background: var(--ff-card);
+  color: var(--ff-primary-dark);
+  border: 2px solid var(--ff-primary);
+  box-shadow: none;
+}
+
+.ff-chip {
+  border-radius: var(--ff-radius-pill);
+  border: 1px solid var(--ff-line);
+  background: var(--ff-card);
+  color: var(--ff-text);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.ff-chip[aria-pressed='true'] {
+  background: var(--ff-primary-strong);
+  border-color: var(--ff-primary-strong);
+  color: #ffffff;
+}
+
+.ff-chip-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.ff-chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.ff-tab-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ff-badge {
+  border-radius: 10px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ff-thumb {
+  border-radius: 16px;
+  object-fit: cover;
+  background: var(--ff-line);
+  flex: 0 0 auto;
+}
+
+.ff-muted {
+  color: var(--ff-muted);
+}
+
+.ff-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ff-divider {
+  height: 1px;
+  background: var(--ff-line);
+  margin: 12px 0;
+}
+
+.ff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ff-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--ff-muted);
+}
+
+.ff-safe-bottom {
+  height: calc(88px + env(safe-area-inset-bottom));
+}
