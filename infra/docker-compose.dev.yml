@@ -1,0 +1,24 @@
+services:
+  rabbitmq:
+    image: rabbitmq:latest
+    container_name: rabbitmq
+    ports:
+      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
+
+  db:
+    image: postgres:18-alpine
+    container_name: farmor_db
+    restart: unless-stopped
+    env_file:
+      - ./config/dev.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASS: ${POSTGRES_PASS}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - farmor-dbdata:/var/lib/postgresql
+
+volumes:
+  farmor-dbdata:
