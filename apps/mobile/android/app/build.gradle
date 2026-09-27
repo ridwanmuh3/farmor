@@ -44,6 +44,25 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
+// Aset web (dist) disalin ke src/main/assets/public oleh `cap sync` dan folder itu
+// tidak ikut ter-commit. Kalau build dijalankan tanpa sync, APK tetap terpasang
+// tapi WebView-nya kosong — layar putih tanpa pesan error. Gagalkan lebih awal.
+tasks.register('assertWebAssets') {
+    doFirst {
+        def webIndex = file('src/main/assets/public/index.html')
+        if (!webIndex.exists()) {
+            throw new GradleException(
+                "Aset web belum ada di ${webIndex}. " +
+                "Jalankan `npm run android:sync` (build web + cap sync) sebelum build Android."
+            )
+        }
+    }
+}
+
+tasks.matching { it.name == 'preBuild' }.configureEach {
+    dependsOn 'assertWebAssets'
+}
+
 try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {

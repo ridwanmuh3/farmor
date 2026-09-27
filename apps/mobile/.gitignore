@@ -7,6 +7,11 @@
 
 # testing
 /coverage
+cypress/screenshots
+cypress/videos
+
+# visual diff harness output (generated screenshots + report)
+tools/visual-diff/out
 
 # production
 /dist
@@ -22,6 +27,7 @@
 /.vscode/*
 !/.vscode/extensions.json
 .idea
+.env
 
 npm-debug.log*
 yarn-debug.log*

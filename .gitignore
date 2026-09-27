@@ -26,3 +26,13 @@ bin/
 .vscode/*
 !.vscode/extensions.json
 *.log
+
+# Local AI tooling state (machine-specific paths, not project source)
+.claude/
+.agents/
+.codex/
+skills-lock.json
+
+# Generated knowledge graph, rebuilt with `graphify update .`
+graphify-out/
+apps/mobile/graphify-out/
