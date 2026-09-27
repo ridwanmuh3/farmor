@@ -1,5 +1,6 @@
 import { IonContent, IonPage } from '@ionic/react';
 import { useState } from 'react';
+import { MessageCircle, Star } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useHistory } from '../router';
 import { rupiah, berat } from '../../core/entities/format';
@@ -12,18 +13,28 @@ export const ProductDetail = () => {
   const { id = '' } = useParams<{ id: string }>();
   const history = useHistory();
   const { addToCart, cart, wishlist, toggleWish } = useShop();
-  const [qty, setQty] = useState(1);
+  // Jumlah yang dipilih diingat per produk supaya pilihan pembeli tidak hilang
+  // saat sempat membuka halaman lain lalu kembali ke produk yang sama.
+  const [qty, setQty] = useState(() => {
+    const saved = Number(sessionStorage.getItem(`ff.qty.${id}`));
+    return Number.isFinite(saved) && saved > 0 ? saved : 1;
+  });
   const [added, setAdded] = useState(false);
+
+  const changeQty = (next: number) => {
+    setQty(next);
+    sessionStorage.setItem(`ff.qty.${id}`, String(next));
+  };
 
   const product = productRepo.byId(id);
 
   if (!product) {
     return (
       <IonPage>
-        <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+        <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
           <div className="ff-screen" style={{ paddingTop: 24 }}>
             <p>Produk tidak ditemukan.</p>
-            <Btn variant="ghost" onClick={() => history.replace('/explore')}>Kembali ke katalog</Btn>
+            <Btn variant="ghost" onClick={() => history.replace('/tabs/explore')}>Kembali ke katalog</Btn>
           </div>
         </IonContent>
       </IonPage>
@@ -45,7 +56,7 @@ export const ProductDetail = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div style={{ position: 'relative' }}>
           <img
             src={product.image}
@@ -65,8 +76,8 @@ export const ProductDetail = () => {
               height: 44,
               borderRadius: 22,
               border: 'none',
-              background: 'rgba(0,0,0,0.55)',
-              color: '#fff',
+              background: 'rgba(0,0,0,0.65)',
+              color: 'var(--ff-on-primary)',
               fontSize: 20,
             }}
           >
@@ -86,8 +97,8 @@ export const ProductDetail = () => {
               height: 44,
               borderRadius: 22,
               border: 'none',
-              background: 'rgba(0,0,0,0.55)',
-              color: saved ? '#ff6b6b' : '#fff',
+              background: 'rgba(0,0,0,0.65)',
+              color: saved ? 'var(--ff-heart-on-dark)' : 'var(--ff-on-primary)',
               fontSize: 18,
             }}
           >
@@ -101,39 +112,77 @@ export const ProductDetail = () => {
               {product.organic ? <Badge>Organik</Badge> : null}
               <Badge tone={soldOut ? 'amber' : 'soft'}>{soldOut ? 'Stok habis' : `Stok ${product.stock} ${product.unit}`}</Badge>
             </div>
-            <h1 className="ff-title" style={{ fontSize: 22, marginTop: 10 }}>{product.name}</h1>
-            <p className="ff-muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
-              {product.sold} terjual · berat {berat(product.weightGram)} per {product.unit}
+            <h1 className="ff-title" style={{ fontSize: 'var(--ff-type-title-hero)', marginTop: 10 }}>{product.name}</h1>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ff-amber)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Star size={12} fill="var(--ff-amber)" aria-hidden />
+              {seller?.rating.toFixed(1)}
+              <span className="ff-muted">({product.reviews} ulasan pembeli)</span>
             </p>
             <div className="ff-divider" />
             <div className="ff-row">
-              <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--ff-primary)' }}>
+              <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--ff-primary-text)' }}>
                 {rupiah(product.price)}
                 <span className="ff-muted" style={{ fontSize: 13, fontWeight: 500 }}>/{product.unit}</span>
               </span>
-              <QtyStepper qty={qty} max={Math.max(1, remaining)} onChange={setQty} />
             </div>
           </div>
 
           <div className="ff-card" style={{ marginTop: 12 }}>
-            <p style={{ margin: 0, fontWeight: 700 }}>Penjual</p>
-            <div className="ff-row" style={{ marginTop: 10 }}>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                <Thumb src={seller?.avatar ?? product.image} size={44} radius={22} />
-                <div>
-                  <p style={{ margin: 0, fontWeight: 600 }}>{seller?.name}</p>
-                  <p className="ff-muted" style={{ margin: 0, fontSize: 12 }}>
-                    {seller?.city} · ★ {seller?.rating}
-                  </p>
+            <div className="ff-row" style={{ alignItems: 'flex-start' }}>
+              <Thumb src={seller?.avatar ?? product.image} size={44} radius={22} />
+              <div style={{ flex: 1 }}>
+                <div className="ff-row">
+                  <span style={{ fontWeight: 600 }}>{seller?.owner ?? seller?.name}</span>
+                  <Badge>TERVERIFIKASI</Badge>
                 </div>
+                <p className="ff-muted" style={{ margin: '2px 0 0', fontSize: 12 }}>
+                  {seller?.name} · {seller?.city}
+                </p>
               </div>
+              <button
+                type="button"
+                aria-label="Chat penjual"
+                onClick={() => history.push('/chat')}
+                className="ff-touch"
+                style={{ padding: 0, border: 'none', background: 'transparent' }}
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    border: '1px solid var(--ff-line)',
+                    background: 'var(--ff-card)',
+                    color: 'var(--ff-primary-text)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <MessageCircle size={16} aria-hidden />
+                </span>
+              </button>
             </div>
           </div>
 
           <div className="ff-card" style={{ marginTop: 12 }}>
-            <p style={{ margin: 0, fontWeight: 700 }}>Deskripsi</p>
+            <p style={{ margin: 0, fontWeight: 700 }}>Pilih Jumlah</p>
+            <div className="ff-row" style={{ marginTop: 10 }}>
+              <QtyStepper qty={qty} max={Math.max(1, remaining)} onChange={changeQty} />
+              <span className="ff-muted" style={{ fontSize: 13 }}>
+                Stok tersedia: {product.stock} {product.unit}
+              </span>
+            </div>
+          </div>
+
+          <div className="ff-card" style={{ marginTop: 12 }}>
+            <p style={{ margin: 0, fontWeight: 700 }}>Deskripsi Produk</p>
             <p className="ff-muted" style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6 }}>
               {product.description}
+            </p>
+            <p className="ff-muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
+              {product.sold} terjual · berat {berat(product.weightGram)} per {product.unit}
             </p>
           </div>
 
@@ -145,6 +194,7 @@ export const ProductDetail = () => {
               {soldOut ? 'Stok Habis' : added ? 'Ditambahkan ✓' : '+ Keranjang'}
             </Btn>
           </div>
+          <span className="ff-sr" role="status">{added ? 'Ditambahkan ke keranjang' : ''}</span>
 
           {related.length > 0 ? (
             <>

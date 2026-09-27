@@ -24,6 +24,7 @@ const makeProduct = (id: string, sellerId: string, price: number, stock = 10): P
   image: `/p-${id}.jpg`,
   description: 'deskripsi',
   sold: 0,
+  reviews: 0,
 });
 
 const PRODUCTS: Product[] = [

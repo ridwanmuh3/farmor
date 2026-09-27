@@ -1,45 +1,90 @@
 import { IonContent, IonPage } from '@ionic/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Bell, Box, PlusCircle, TrendingUp } from 'lucide-react';
 import { useHistory } from '../router';
-import { rupiah, tanggal } from '../../core/entities/format';
+import { rupiah } from '../../core/entities/format';
 import type { Product } from '../../core/entities/types';
-import { CATEGORIES } from '../../data/dto/catalog';
+import { CATEGORIES, SELLERS } from '../../data/dto/catalog';
 import { productRepo } from '../../data/repositories';
 import { useShop } from '../components/ShopProvider';
 import { STATUS_LABEL, STATUS_STYLE } from '../components/selectors';
 import { statusAfterSellerAccepts, statusAfterSellerRejects } from '../../core/services/inventory';
-import { Badge, Btn, Card, Empty, Field, Row } from '../components/ui';
+import { Badge, Btn, Card, ConfirmBtn, Empty, Field, Row, Thumb } from '../components/ui';
 
-const SELLER_ID = 's1';
+/**
+ * Halaman penjual milik seller yang sedang masuk. Akun demo belum punya
+ * relasi ke Seller, jadi dicocokkan lewat id akun dan jatuh ke s1 sebagai
+ * default — goutkan ini begitu backend keyed by seller id tersedia.
+ */
+const useSeller = () => {
+  const { user } = useShop();
+  const id = SELLERS.some((s) => s.id === user.id) ? user.id : 's1';
+  return { sellerId: id, seller: SELLERS.find((s) => s.id === id)! };
+};
 
 export const SellerDashboard = () => {
   const history = useHistory();
-  const { orders, user } = useShop();
-  const mine = orders.filter((o) => o.sellerId === SELLER_ID);
-  const active = mine.filter((o) => o.status === 'dibayar' || o.status === 'diproses' || o.status === 'dikirim');
+  const { orders, user, setOrderStatus } = useShop();
+  const { sellerId, seller } = useSeller();
+  const mine = orders.filter((o) => o.sellerId === sellerId);
   const revenue = mine
     .filter((o) => o.status !== 'dibatalkan')
     .reduce((sum, o) => sum + o.subtotal, 0);
-  const products = productRepo.bySeller(SELLER_ID);
+  const products = productRepo.bySeller(sellerId);
 
   const stats = [
-    { label: 'Pendapatan', value: rupiah(revenue), tone: 'soft' as const },
-    { label: 'Pesanan Aktif', value: String(active.length), tone: 'plain' as const },
+    { label: 'Pendapatan Bulan Ini', value: rupiah(revenue), tone: 'soft' as const },
+    { label: 'Total Pesanan', value: String(mine.length), tone: 'plain' as const },
     { label: 'Produk Aktif', value: String(products.length), tone: 'plain' as const },
-    { label: 'Perlu Diproses', value: String(mine.filter((o) => o.status === 'dibayar').length), tone: 'amber' as const },
+    { label: 'Rating', value: `${seller.rating.toFixed(1)} ★`, tone: 'amber' as const },
+  ];
+
+  const actions = [
+    { label: 'Tambah Produk', to: '/seller/add', Icon: PlusCircle },
+    { label: 'Kelola Stok', to: '/seller/products', Icon: Box },
+    { label: 'Lihat Laporan', to: '/seller/orders', Icon: TrendingUp },
   ];
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
-        <div className="ff-screen" style={{ paddingTop: 16 }}>
-          <div className="ff-row">
-            <div>
-              <p className="ff-muted" style={{ margin: 0, fontSize: 13 }}>Selamat bertani,</p>
-              <h1 className="ff-title" style={{ fontSize: 20 }}>{user.name}</h1>
-            </div>
-            <Badge>Penjual</Badge>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
+        <div
+          style={{
+            background: 'var(--ff-primary-strong)',
+            color: 'var(--ff-on-primary)',
+            padding: '16px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <Thumb src={seller.avatar ?? user.avatar ?? ''} size={40} radius={20} />
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: '0 0 var(--ff-space-1)', fontSize: 12, opacity: 0.9 }}>Selamat Bekerja,</p>
+            <p style={{ margin: 0, fontWeight: 700 }}>{seller.owner} ({seller.name})</p>
           </div>
+          <button
+            type="button"
+            aria-label="Notifikasi"
+            onClick={() => history.push('/notifications')}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              border: '1px solid rgba(255,255,255,0.4)',
+              background: 'transparent',
+              color: 'var(--ff-on-primary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Bell size={18} aria-hidden />
+          </button>
+        </div>
+
+        <div className="ff-screen" style={{ paddingTop: 16 }}>
+          <h1 className="ff-title" style={{ fontSize: 'var(--ff-type-title-screen)' }}>Dashboard Petani</h1>
 
           <div className="ff-grid" style={{ marginTop: 16 }}>
             {stats.map((s) => (
@@ -60,9 +105,44 @@ export const SellerDashboard = () => {
           </div>
 
           <h2 className="ff-section">Aksi Cepat</h2>
-          <div className="ff-row" style={{ gap: 8 }}>
-            <Btn onClick={() => history.push('/seller/add')}>Tambah Produk</Btn>
-            <Btn variant="ghost" onClick={() => history.push('/seller/products')}>Kelola Produk</Btn>
+          <div className="ff-grid">
+            {actions.map(({ label, to, Icon }) => (
+              <Card key={label}>
+                <button
+                  type="button"
+                  onClick={() => history.push(to)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    minHeight: 44,
+                    color: 'var(--ff-text)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      background: 'var(--ff-primary-soft)',
+                      color: 'var(--ff-primary-dark)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon size={18} aria-hidden />
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>{label}</span>
+                </button>
+              </Card>
+            ))}
           </div>
 
           <div className="ff-row" style={{ marginTop: 24 }}>
@@ -70,7 +150,7 @@ export const SellerDashboard = () => {
             <button
               type="button"
               onClick={() => history.push('/seller/orders')}
-              style={{ background: 'none', border: 'none', color: 'var(--ff-primary)', fontWeight: 600, minHeight: 44 }}
+              style={{ background: 'none', border: 'none', color: 'var(--ff-primary-text)', fontWeight: 600, minHeight: 44 }}
             >
               Lihat Semua
             </button>
@@ -84,27 +164,39 @@ export const SellerDashboard = () => {
               return (
                 <Card key={order.id} style={{ marginTop: 12 }}>
                   <Row>
-                    <span style={{ fontWeight: 600 }}>{order.address.recipient}</span>
+                    <div>
+                      <span style={{ fontWeight: 600 }}>{order.address.recipient}</span>
+                      <p className="ff-muted" style={{ margin: '2px 0 0', fontSize: 12 }}>
+                        {order.items.map((i) => i.name).join(', ')} × {order.items.reduce((s, i) => s + i.qty, 0)} {order.items[0]?.unit}
+                      </p>
+                    </div>
                     <span className="ff-badge" style={{ background: style.bg, color: style.fg }}>
                       {STATUS_LABEL[order.status]}
                     </span>
                   </Row>
-                  <p className="ff-muted" style={{ margin: '4px 0 8px', fontSize: 12 }}>
-                    {order.invoice} · {tanggal(order.createdAt)}
-                  </p>
-                  {order.items.map((item) => (
-                    <p key={item.productId} style={{ margin: 0, fontSize: 13 }}>
-                      {item.name} × {item.qty} {item.unit}
-                    </p>
-                  ))}
                   <div className="ff-divider" />
                   <Row>
-                    <span className="ff-muted" style={{ fontSize: 13 }}>Total</span>
-                    <span style={{ fontWeight: 700, color: 'var(--ff-primary)' }}>{rupiah(order.subtotal)}</span>
+                    <span className="ff-muted" style={{ fontSize: 12 }}>Total</span>
+                    <span style={{ fontWeight: 700, color: 'var(--ff-primary-text)' }}>{rupiah(order.subtotal)}</span>
                   </Row>
-                  <div style={{ marginTop: 12 }}>
-                    <Btn onClick={() => history.push('/seller/orders')}>Kelola</Btn>
-                  </div>
+                  {order.status === 'dibayar' ? (
+                    <div className="ff-row" style={{ marginTop: 12, gap: 8 }}>
+                      <ConfirmBtn
+                        variant="ghost"
+                        title="Tolak pesanan ini?"
+                        note="Pesanan dibatalkan dan pembeli diberi tahu. Tindakan ini tidak bisa dibatalkan."
+                        confirmLabel="Ya, Tolak"
+                        onConfirm={() => setOrderStatus(order.id, statusAfterSellerRejects())}
+                      >
+                        Tolak
+                      </ConfirmBtn>
+                      <Btn onClick={() => setOrderStatus(order.id, statusAfterSellerAccepts())}>Proses</Btn>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 12 }}>
+                      <Btn onClick={() => history.push('/seller/orders')}>Kelola</Btn>
+                    </div>
+                  )}
                 </Card>
               );
             })
@@ -118,8 +210,9 @@ export const SellerDashboard = () => {
 
 export const SellerOrders = () => {
   const { orders, setOrderStatus } = useShop();
+  const { sellerId } = useSeller();
   const [tab, setTab] = useState<'baru' | 'diproses' | 'dikirim' | 'selesai'>('baru');
-  const mine = orders.filter((o) => o.sellerId === SELLER_ID);
+  const mine = orders.filter((o) => o.sellerId === sellerId);
 
   const tabs = [
     { id: 'baru' as const, label: 'Baru', match: ['dibayar'] },
@@ -132,10 +225,10 @@ export const SellerOrders = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div className="ff-screen" style={{ paddingTop: 16 }}>
           <div className="ff-row">
-            <h1 className="ff-title" style={{ fontSize: 22 }}>Kelola Pesanan</h1>
+            <h1 className="ff-title" style={{ fontSize: 'var(--ff-type-title-hero)' }}>Kelola Pesanan</h1>
           </div>
 
           <div className="ff-chip-row" style={{ marginTop: 12 }}>
@@ -167,7 +260,7 @@ export const SellerOrders = () => {
                 ))}
                 <Row>
                   <span className="ff-muted" style={{ fontSize: 13 }}>Total</span>
-                  <span style={{ fontWeight: 700, color: 'var(--ff-primary)' }}>{rupiah(order.subtotal)}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--ff-primary-text)' }}>{rupiah(order.subtotal)}</span>
                 </Row>
                 <p className="ff-muted" style={{ margin: '8px 0 0', fontSize: 12 }}>
                   Kirim ke: {order.address.line}
@@ -176,7 +269,15 @@ export const SellerOrders = () => {
                 <div className="ff-row" style={{ marginTop: 12, gap: 8 }}>
                   {order.status === 'dibayar' ? (
                     <>
-                      <Btn variant="ghost" onClick={() => setOrderStatus(order.id, statusAfterSellerRejects())}>Tolak</Btn>
+                      <ConfirmBtn
+                        variant="ghost"
+                        title="Tolak pesanan ini?"
+                        note="Pesanan dibatalkan dan pembeli diberi tahu. Tindakan ini tidak bisa dibatalkan."
+                        confirmLabel="Ya, Tolak"
+                        onConfirm={() => setOrderStatus(order.id, statusAfterSellerRejects())}
+                      >
+                        Tolak
+                      </ConfirmBtn>
                       <Btn onClick={() => setOrderStatus(order.id, statusAfterSellerAccepts())}>Terima &amp; Proses</Btn>
                     </>
                   ) : null}
@@ -199,24 +300,25 @@ export const SellerOrders = () => {
 
 export const SellerProducts = () => {
   const history = useHistory();
-  const [products, setProducts] = useState<Product[]>(() => productRepo.bySeller(SELLER_ID));
+  const { sellerId } = useSeller();
+  const [products, setProducts] = useState<Product[]>(() => productRepo.bySeller(sellerId));
 
   const changeStock = (id: string, next: number) => {
     productRepo.setStock(id, next);
-    setProducts(productRepo.bySeller(SELLER_ID));
+    setProducts(productRepo.bySeller(sellerId));
   };
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div className="ff-screen" style={{ paddingTop: 16 }}>
           <div className="ff-row">
             <button type="button" className="ff-chip" onClick={() => history.goBack()} aria-label="Kembali" style={{ width: 44, padding: 0 }}>‹</button>
-            <h1 className="ff-title" style={{ fontSize: 20, flex: 1 }}>Kelola Produk</h1>
+            <h1 className="ff-title" style={{ fontSize: 'var(--ff-type-title-screen)', flex: 1 }}>Kelola Produk</h1>
             <button
               type="button"
               onClick={() => history.push('/seller/add')}
-              style={{ background: 'none', border: 'none', color: 'var(--ff-primary)', fontWeight: 700, minHeight: 44 }}
+              style={{ background: 'none', border: 'none', color: 'var(--ff-primary-text)', fontWeight: 700, minHeight: 44 }}
             >
               Tambah
             </button>
@@ -229,7 +331,7 @@ export const SellerProducts = () => {
               <Card key={p.id} style={{ marginTop: 12 }}>
                 <Row>
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <img src={p.image} alt="" width={48} height={48} style={{ borderRadius: 12, objectFit: 'cover' }} />
+                    <img src={p.image} alt="" width={48} height={48} style={{ borderRadius: 12, objectFit: 'cover' }} loading="lazy" decoding="async" />
                     <div>
                       <p style={{ margin: 0, fontWeight: 600 }}>{p.name}</p>
                       <p className="ff-muted" style={{ margin: 0, fontSize: 12 }}>
@@ -263,6 +365,7 @@ export const SellerProducts = () => {
 export const SellerAddProduct = () => {
   const history = useHistory();
   const { user } = useShop();
+  const { sellerId } = useSeller();
   const [form, setForm] = useState({
     name: '',
     category: 'Sayuran',
@@ -274,15 +377,26 @@ export const SellerAddProduct = () => {
   });
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+  const stockRef = useRef<HTMLInputElement>(null);
+
+  const nameInvalid = Boolean(error) && !form.name.trim();
+  const priceInvalid = Boolean(error) && Number(form.price) <= 0;
+  const stockInvalid = Boolean(error) && Number(form.stock) <= 0;
 
   const submit = () => {
-    if (!form.name.trim() || Number(form.price) <= 0 || Number(form.stock) < 0) {
+    const firstInvalid = !form.name.trim() ? nameRef : Number(form.price) <= 0 ? priceRef : Number(form.stock) <= 0 ? stockRef : null;
+    if (firstInvalid) {
       setError('Nama, harga di atas 0, dan stok wajib diisi.');
+      // Fokus ke kolom bermasalah pertama supaya pengguna keyboard tidak tersesat.
+      firstInvalid.current?.focus();
       return;
     }
+    setError('');
     productRepo.add({
       id: `c${Date.now()}`,
-      sellerId: SELLER_ID,
+      sellerId,
       name: form.name.trim(),
       category: form.category,
       price: Number(form.price),
@@ -293,6 +407,7 @@ export const SellerAddProduct = () => {
       image: '/product-1.jpg',
       description: 'Produk baru dari ' + user.name + '.',
       sold: 0,
+      reviews: 0,
     });
     setSaved(true);
     setTimeout(() => history.replace('/seller/products'), 700);
@@ -300,11 +415,11 @@ export const SellerAddProduct = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div className="ff-screen" style={{ paddingTop: 16 }}>
           <div className="ff-row">
             <button type="button" className="ff-chip" onClick={() => history.goBack()} aria-label="Kembali" style={{ width: 44, padding: 0 }}>‹</button>
-            <h1 className="ff-title" style={{ fontSize: 20, flex: 1 }}>Tambah Produk</h1>
+            <h1 className="ff-title" style={{ fontSize: 'var(--ff-type-title-screen)', flex: 1 }}>Tambah Produk</h1>
           </div>
 
           <div
@@ -317,13 +432,23 @@ export const SellerAddProduct = () => {
               color: 'var(--ff-muted)',
             }}
           >
-            <p style={{ margin: 0, fontWeight: 700, color: 'var(--ff-primary)' }}>Tambah Foto Produk</p>
-            <p style={{ margin: '4px 0 0', fontSize: 12 }}>Maksimal 5 foto (JPG, PNG)</p>
+            <p style={{ margin: 0, fontWeight: 700, color: 'var(--ff-primary-text)' }}>Tambah Foto Produk</p>
+            <p style={{ margin: '4px 0 0', fontSize: 12 }}>
+              Unggah foto menyusul. Sampai itu siap, produk memakai foto bawaan.
+            </p>
           </div>
 
           <div className="ff-stack" style={{ marginTop: 16 }}>
             <Field label="Nama Produk">
-              <input className="ff-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Contoh: Tomat Ceri" />
+              <input
+                className="ff-input"
+                ref={nameRef}
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Contoh: Tomat Ceri"
+                aria-invalid={nameInvalid}
+                aria-describedby={nameInvalid ? 'add-product-error' : undefined}
+              />
             </Field>
             <Field label="Kategori">
               <select className="ff-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
@@ -334,7 +459,16 @@ export const SellerAddProduct = () => {
             </Field>
             <div className="ff-grid">
               <Field label="Harga per Satuan">
-                <input className="ff-input" inputMode="numeric" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="30000" />
+                <input
+                  className="ff-input"
+                  inputMode="numeric"
+                  ref={priceRef}
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                  placeholder="30000"
+                  aria-invalid={priceInvalid}
+                  aria-describedby={priceInvalid ? 'add-product-error' : undefined}
+                />
               </Field>
               <Field label="Satuan">
                 <select className="ff-input" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}>
@@ -346,7 +480,16 @@ export const SellerAddProduct = () => {
             </div>
             <div className="ff-grid">
               <Field label="Stok Tersedia">
-                <input className="ff-input" inputMode="numeric" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="80" />
+                <input
+                  className="ff-input"
+                  inputMode="numeric"
+                  ref={stockRef}
+                  value={form.stock}
+                  onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                  placeholder="80"
+                  aria-invalid={stockInvalid}
+                  aria-describedby={stockInvalid ? 'add-product-error' : undefined}
+                />
               </Field>
               <Field label="Berat Pengiriman (g)">
                 <input className="ff-input" inputMode="numeric" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
@@ -359,39 +502,58 @@ export const SellerAddProduct = () => {
                   <p style={{ margin: 0, fontWeight: 600 }}>Produk Organik</p>
                   <p className="ff-muted" style={{ margin: 0, fontSize: 12 }}>Apakah bebas pestisida kimia?</p>
                 </div>
+                {/* Target sentuh 44px: track 48×28 digambar di dalam tombol yang lebih tinggi. */}
                 <button
                   type="button"
                   role="switch"
                   aria-checked={form.organic}
                   onClick={() => setForm({ ...form, organic: !form.organic })}
                   style={{
-                    width: 48,
-                    height: 28,
-                    borderRadius: 14,
+                    width: 52,
+                    height: 44,
+                    padding: 0,
                     border: 'none',
-                    background: form.organic ? 'var(--ff-primary)' : 'var(--ff-line)',
+                    background: 'transparent',
                     position: 'relative',
                     cursor: 'pointer',
                   }}
                 >
                   <span
+                    aria-hidden
                     style={{
                       position: 'absolute',
-                      top: 3,
-                      left: form.organic ? 23 : 3,
-                      width: 22,
-                      height: 22,
-                      borderRadius: 11,
-                      background: '#fff',
-                      transition: 'left 0.15s',
+                      top: 8,
+                      left: 2,
+                      width: 48,
+                      height: 28,
+                      borderRadius: 14,
+                      background: form.organic ? 'var(--ff-primary-strong)' : 'var(--ff-line)',
                     }}
-                  />
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 3,
+                        left: form.organic ? 23 : 3,
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        background: 'var(--ff-card)',
+                        transition: 'left 0.15s',
+                      }}
+                    />
+                  </span>
                 </button>
               </Row>
             </Card>
 
-            {error ? <p style={{ color: 'var(--ff-danger)', fontSize: 13, margin: 0 }}>{error}</p> : null}
+            {error ? (
+              <p id="add-product-error" role="alert" style={{ color: 'var(--ff-danger)', fontSize: 13, margin: 0 }}>
+                {error}
+              </p>
+            ) : null}
             <Btn onClick={submit} disabled={saved}>{saved ? 'Tersimpan ✓' : 'Simpan Produk'}</Btn>
+            <span className="ff-sr" role="status">{saved ? 'Produk tersimpan' : ''}</span>
           </div>
           <div className="ff-safe-bottom" />
         </div>

@@ -39,13 +39,17 @@ export const buildCheckoutPreview = (
   const shipping = orders.length * DEFAULT_SHIPPING;
   const capped = Math.min(discount, sub);
 
+  // Dihitung dari baris yang benar-benar ikut dipesan, bukan dari keranjang mentah,
+  // supaya label "(n item)" tidak menghitung produk yang sudah tidak ada.
+  const qty = orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.qty, 0), 0);
+
   return {
     orders,
     subtotal: sub,
     shipping,
     discount: capped,
     total: sub + shipping - capped,
-    qty: cart.reduce((sum, i) => sum + i.qty, 0),
+    qty,
   };
 };
 

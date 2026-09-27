@@ -1,6 +1,7 @@
 import type {
   Address,
   CartItem,
+  ChatBubble,
   CheckoutResult,
   Order,
   PaymentMethod,
@@ -9,7 +10,15 @@ import type {
 } from '../../core/entities/types';
 import { buildOrders } from '../../core/services/order';
 import { nextStock } from '../../core/services/inventory';
-import { ADDRESSES, DEMO_SELLER_USER, DEMO_USER, PRODUCTS, SELLERS } from '../dto/catalog';
+import { jam } from '../../core/entities/format';
+import {
+  ADDRESSES,
+  DEMO_SELLER_USER,
+  DEMO_USER,
+  PRODUCTS,
+  SEED_CHAT,
+  SELLERS,
+} from '../dto/catalog';
 
 const CART_KEY = 'farmor.cart';
 const ORDERS_KEY = 'farmor.orders';
@@ -18,6 +27,7 @@ const ADDR_KEY = 'farmor.addresses';
 const CUSTOM_KEY = 'farmor.products.custom';
 const STOCK_KEY = 'farmor.stock';
 const WISH_KEY = 'farmor.wishlist';
+const CHAT_KEY = 'farmor.chat';
 
 const read = <T,>(key: string, fallback: T): T => {
   try {
@@ -100,6 +110,11 @@ export const orderRepo = {
       discount: discountOverride,
     });
 
+    // Tidak ada pesanan yang terbentuk (produk hilang dari katalog, misalnya):
+    // jangan sentuh stok, jangan kosongkan keranjang, dan kembalikan daftar kosong
+    // supaya pemanggil bisa memberi tahu pembeli tanpa kehilangan isiannya.
+    if (orders.length === 0) return { groupId, orders, paidAt: new Date().toISOString() };
+
     // Stok dikunci saat pesanan dibuat, bukan saat masuk keranjang.
     for (const order of orders) {
       for (const line of order.items) {
@@ -141,3 +156,17 @@ export const wishlistRepo = {
     return next;
   },
 };
+
+/**
+ * Riwayat chat disimpan di perangkat supaya pesan yang sudah dikirim tidak
+ * hilang saat aplikasi ditutup. Ganti dengan API saat backend siap.
+ */
+export const chatRepo = {
+  get: (): ChatBubble[] => read<ChatBubble[]>(CHAT_KEY, SEED_CHAT),
+  append(current: ChatBubble[], message: Omit<ChatBubble, 'id' | 'at'>): ChatBubble[] {
+    const next = [...current, { ...message, id: `c${current.length + 1}`, at: jam() }];
+    write(CHAT_KEY, next);
+    return next;
+  },
+};
+

@@ -1,11 +1,12 @@
 import { IonContent, IonPage } from '@ionic/react';
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useHistory } from '../router';
 import { rupiah, tanggal } from '../../core/entities/format';
 import type { OrderStatus } from '../../core/entities/types';
 import { useShop } from '../components/ShopProvider';
 import { STATUS_LABEL, STATUS_STYLE } from '../components/selectors';
-import { Btn, Card, Empty, Row } from '../components/ui';
+import { Btn, Card, ConfirmBtn, Empty, Row } from '../components/ui';
 
 const TABS: { id: 'semua' | OrderStatus; label: string }[] = [
   { id: 'semua', label: 'Semua' },
@@ -23,11 +24,11 @@ export const OrderHistory = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div className="ff-screen" style={{ paddingTop: 16 }}>
           <div className="ff-row">
             <button type="button" className="ff-chip" onClick={() => history.goBack()} aria-label="Kembali" style={{ width: 44, padding: 0 }}>‹</button>
-            <h1 className="ff-title" style={{ fontSize: 20, flex: 1 }}>Riwayat Pesanan</h1>
+            <h1 className="ff-title" style={{ fontSize: 'var(--ff-type-title-screen)', flex: 1 }}>Riwayat Pesanan</h1>
           </div>
 
           <div className="ff-chip-row" style={{ marginTop: 16 }}>
@@ -70,6 +71,8 @@ export const OrderHistory = () => {
                           width={36}
                           height={36}
                           style={{ borderRadius: 10, objectFit: 'cover' }}
+                          loading="lazy"
+                          decoding="async"
                         />
                         {item.name} × {item.qty} {item.unit}
                       </span>
@@ -79,14 +82,21 @@ export const OrderHistory = () => {
                   <div className="ff-divider" />
                   <Row>
                     <span className="ff-muted" style={{ fontSize: 13 }}>Total</span>
-                    <span style={{ fontWeight: 700, color: 'var(--ff-primary)' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--ff-primary-text)' }}>
                       {rupiah(order.subtotal + order.shipping - order.discount)}
                     </span>
                   </Row>
                   <div className="ff-row" style={{ marginTop: 12, gap: 8 }}>
                     <Btn variant="ghost" onClick={() => history.push(`/tracking/${order.id}`)}>Lacak</Btn>
                     {order.status === 'dikirim' ? (
-                      <Btn onClick={() => setOrderStatus(order.id, 'selesai')}>Pesanan Diterima</Btn>
+                      <ConfirmBtn
+                        title="Pesanan sudah diterima?"
+                        note="Pesanan ditandai selesai dan pembeli berhenti bisa mengonfirmasi ulang."
+                        confirmLabel="Ya, Diterima"
+                        onConfirm={() => setOrderStatus(order.id, 'selesai')}
+                      >
+                        Pesanan Diterima
+                      </ConfirmBtn>
                     ) : (
                       <Btn onClick={() => history.push(`/orders/${order.id}`)}>Detail</Btn>
                     )}
@@ -104,14 +114,14 @@ export const OrderHistory = () => {
 
 export const OrderDetail = () => {
   const history = useHistory();
+  const { id = '' } = useParams<{ id: string }>();
   const { orders, setOrderStatus } = useShop();
-  const id = history.location.pathname.split('/').pop();
   const order = orders.find((o) => o.id === id);
 
   if (!order) {
     return (
       <IonPage>
-        <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+        <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
           <div className="ff-screen" style={{ paddingTop: 24 }}>
             <Empty title="Pesanan tidak ditemukan" note="Mungkin sudah dihapus." />
             <Btn variant="ghost" onClick={() => history.replace('/orders')}>Ke Riwayat</Btn>
@@ -126,11 +136,11 @@ export const OrderDetail = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div className="ff-screen" style={{ paddingTop: 16 }}>
           <div className="ff-row">
             <button type="button" className="ff-chip" onClick={() => history.goBack()} aria-label="Kembali" style={{ width: 44, padding: 0 }}>‹</button>
-            <h1 className="ff-title" style={{ fontSize: 20, flex: 1 }}>Detail Pesanan</h1>
+            <h1 className="ff-title" style={{ fontSize: 'var(--ff-type-title-screen)', flex: 1 }}>Detail Pesanan</h1>
           </div>
 
           <Card style={{ marginTop: 16 }}>
@@ -177,14 +187,21 @@ export const OrderDetail = () => {
             <div className="ff-divider" />
             <Row>
               <span style={{ fontWeight: 700 }}>Total</span>
-              <span style={{ fontWeight: 700, color: 'var(--ff-primary)' }}>{rupiah(total)}</span>
+              <span style={{ fontWeight: 700, color: 'var(--ff-primary-text)' }}>{rupiah(total)}</span>
             </Row>
           </Card>
 
           <div className="ff-row" style={{ marginTop: 16, gap: 8 }}>
             <Btn variant="ghost" onClick={() => history.push(`/tracking/${order.id}`)}>Lacak Pengiriman</Btn>
             {order.status === 'dikirim' ? (
-              <Btn onClick={() => setOrderStatus(order.id, 'selesai')}>Pesanan Diterima</Btn>
+              <ConfirmBtn
+                title="Pesanan sudah diterima?"
+                note="Pesanan ditandai selesai dan pembeli berhenti bisa mengonfirmasi ulang."
+                confirmLabel="Ya, Diterima"
+                onConfirm={() => setOrderStatus(order.id, 'selesai')}
+              >
+                Pesanan Diterima
+              </ConfirmBtn>
             ) : null}
           </div>
           <div className="ff-safe-bottom" />

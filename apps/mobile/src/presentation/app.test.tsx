@@ -24,4 +24,11 @@ describe('wiring aplikasi', () => {
     renderAppAt('/seller/dashboard');
     expect(await screen.findByText('Aksi Cepat')).toBeTruthy();
   });
+
+  // Halaman non-tab dimuat lazy; tes ini menutup celah Suspense yang kosong.
+  it('rute yang dimuat lazy tetap terender', async () => {
+    renderAppAt('/product/p1');
+    expect(await screen.findByText('Wortel Organik Segar')).toBeTruthy();
+    expect(screen.getByText('Rp12.000')).toBeTruthy();
+  });
 });

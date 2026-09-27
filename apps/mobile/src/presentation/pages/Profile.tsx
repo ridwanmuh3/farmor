@@ -5,7 +5,7 @@ import { roleLabel } from '../../data/dto/catalog';
 import { initialsOf } from '../../core/entities/format';
 import { environment } from '../../environments/environment';
 import { useShop } from '../components/ShopProvider';
-import { Btn, Card } from '../components/ui';
+import { Btn, Card, ConfirmBtn } from '../components/ui';
 
 export const Profile = () => {
   const history = useHistory();
@@ -14,7 +14,6 @@ export const Profile = () => {
 
   const menu = [
     { label: 'Alamat Pengiriman', note: address.label, action: () => history.push('/addresses') },
-    { label: 'Metode Pembayaran', note: 'QRIS, Transfer, E-Money', action: () => history.push('/checkout') },
     { label: 'Wishlist', note: 'Produk yang disimpan', action: () => history.push('/wishlist') },
     { label: 'Notifikasi', note: 'Pengingat pesanan', action: () => history.push('/notifications') },
     { label: 'Riwayat Pesanan', note: 'Semua transaksi', action: () => history.push('/orders') },
@@ -25,7 +24,7 @@ export const Profile = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div className="ff-screen" style={{ paddingTop: 16 }}>
           <h1 className="ff-title">Profil</h1>
 
@@ -40,8 +39,8 @@ export const Profile = () => {
                       width: 56,
                       height: 56,
                       borderRadius: 28,
-                      background: 'var(--ff-primary)',
-                      color: '#fff',
+                      background: 'var(--ff-primary-strong)',
+                      color: 'var(--ff-on-primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -53,7 +52,7 @@ export const Profile = () => {
                   </span>
                 )}
                 <div>
-                  <p style={{ margin: 0, fontWeight: 700 }}>{user.name}</p>
+                  <p style={{ margin: '0 0 var(--ff-space-1)', fontWeight: 700 }}>{user.name}</p>
                   <p className="ff-muted" style={{ margin: 0, fontSize: 13 }}>{user.email}</p>
                 </div>
               </div>
@@ -118,9 +117,19 @@ export const Profile = () => {
           </Card>
 
           <div style={{ marginTop: 16, marginBottom: 24 }}>
-            <Btn variant="ghost" onClick={() => { signOut(); history.replace('/login'); }} style={{ color: 'var(--ff-danger)', borderColor: 'var(--ff-danger)' }}>
+            <ConfirmBtn
+              variant="ghost"
+              title="Keluar dari akun?"
+              note="Keranjang dan riwayat pesanan di perangkat ini akan ikut terhapus."
+              confirmLabel="Ya, Keluar"
+              onConfirm={() => {
+                signOut();
+                history.replace('/login');
+              }}
+              style={{ color: 'var(--ff-danger)', borderColor: 'var(--ff-danger)' }}
+            >
               Keluar
-            </Btn>
+            </ConfirmBtn>
           </div>
           <div className="ff-safe-bottom" />
         </div>
@@ -139,11 +148,11 @@ export const SimpleInfo = ({ title }: { title: string }) => {
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div className="ff-screen" style={{ paddingTop: 16 }}>
           <div className="ff-row">
             <button type="button" className="ff-chip" onClick={() => history.goBack()} aria-label="Kembali" style={{ width: 44, padding: 0 }}>‹</button>
-            <h1 className="ff-title" style={{ fontSize: 20, flex: 1 }}>{title}</h1>
+            <h1 className="ff-title" style={{ fontSize: 'var(--ff-type-title-screen)', flex: 1 }}>{title}</h1>
           </div>
           <Card style={{ marginTop: 16 }}>
             <p className="ff-muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.7 }}>

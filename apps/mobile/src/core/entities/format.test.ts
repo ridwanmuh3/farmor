@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { berat, greetingOf, initialsOf, rupiah, tanggal, totalQty } from './format';
+import { berat, greetingOf, initialsOf, isEmail, isPhone, jam, rupiah, tanggal, totalQty } from './format';
 
 describe('rupiah', () => {
   it('memformat angka jadi rupiah tanpa desimal', () => {
@@ -46,5 +46,41 @@ describe('greetingOf', () => {
     expect(greetingOf(new Date('2026-01-15T12:00:00'))).toBe('Selamat siang');
     expect(greetingOf(new Date('2026-01-15T17:00:00'))).toBe('Selamat sore');
     expect(greetingOf(new Date('2026-01-15T21:00:00'))).toBe('Selamat malam');
+  });
+});
+
+describe('isEmail', () => {
+  it('menerima email dengan nama lokal, domain, dan titik', () => {
+    expect(isEmail('ridwan@farmor.id')).toBe(true);
+    expect(isEmail('  ridwan@farmor.co.id  ')).toBe(true);
+  });
+
+  it('menolak email tanpa titik domain atau tanpa nama lokal', () => {
+    expect(isEmail('ridwan@farmor')).toBe(false);
+    expect(isEmail('@farmor.id')).toBe(false);
+    expect(isEmail('nama saja')).toBe(false);
+    expect(isEmail('')).toBe(false);
+  });
+});
+
+describe('isPhone', () => {
+  it('menerima format 08 dan 62, dengan spasi atau hubung', () => {
+    expect(isPhone('081234567890')).toBe(true);
+    expect(isPhone('+6281234567890')).toBe(true);
+    expect(isPhone('0812 3456 7890')).toBe(true);
+    expect(isPhone('0812-3456-7890')).toBe(true);
+  });
+
+  it('menolak nomor yang terlalu pendek, huruf, atau kosong', () => {
+    expect(isPhone('0812')).toBe(false);
+    expect(isPhone('bukan-nomor')).toBe(false);
+    expect(isPhone('')).toBe(false);
+  });
+});
+
+describe('jam', () => {
+  it('memformat jam dan menit dua digit', () => {
+    expect(jam(new Date('2026-01-15T08:05:00'))).toBe('08:05');
+    expect(jam(new Date('2026-01-15T19:30:00'))).toBe('19:30');
   });
 });

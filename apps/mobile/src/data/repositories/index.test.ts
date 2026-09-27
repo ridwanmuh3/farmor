@@ -55,6 +55,18 @@ describe('checkout lewat orderRepo', () => {
 
     expect(orderRepo.byId(order.id)!.status).toBe('dikirim');
   });
+
+  it('menolak checkout dari keranjang kosong tanpa mengosongkan apa pun', () => {
+    cartRepo.setQty('p1', 2);
+
+    // Produk hilang dari katalog sehingga tidak ada baris yang bisa dipesan.
+    const result = orderRepo.checkout([{ productId: 'produk-hilang', qty: 1 }], ADDRESSES[0], 'qris');
+
+    expect(result.orders).toEqual([]);
+    expect(orderRepo.get()).toEqual([]);
+    // Keranjang pembeli harus utuh supaya bisa mencoba lagi.
+    expect(cartRepo.get()).toEqual([{ productId: 'p1', qty: 2 }]);
+  });
 });
 
 describe('wishlist lewat repo', () => {

@@ -11,13 +11,12 @@ export const OrderReceipt = () => {
   const history = useHistory();
   const { orders } = useShop();
 
-  const group = orders.filter((o) => o.groupId === groupId);
-  const list = group.length > 0 ? group : orders.slice(0, 1);
+  const list = orders.filter((o) => o.groupId === groupId);
 
   if (list.length === 0) {
     return (
       <IonPage>
-        <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+        <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
           <div className="ff-screen" style={{ paddingTop: 24 }}>
             <Empty title="Pesanan tidak ditemukan" note="Cek riwayat pesanan untuk detail." />
             <Btn variant="ghost" onClick={() => history.replace('/orders')}>Ke Riwayat</Btn>
@@ -32,15 +31,15 @@ export const OrderReceipt = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div className="ff-screen" style={{ paddingTop: 32, textAlign: 'center' }}>
           <div
             style={{
               width: 72,
               height: 72,
               borderRadius: 36,
-              background: 'var(--ff-primary)',
-              color: '#fff',
+              background: 'var(--ff-primary-strong)',
+              color: 'var(--ff-on-primary)',
               fontSize: 34,
               display: 'flex',
               alignItems: 'center',
@@ -58,7 +57,7 @@ export const OrderReceipt = () => {
           <Card style={{ marginTop: 24, textAlign: 'left' }}>
             <Row>
               <span className="ff-muted">Total dibayar</span>
-              <span style={{ fontWeight: 700, color: 'var(--ff-primary)' }}>{rupiah(total)}</span>
+              <span style={{ fontWeight: 700, color: 'var(--ff-primary-text)' }}>{rupiah(total)}</span>
             </Row>
             <Row style={{ marginTop: 8 }}>
               <span className="ff-muted">Metode</span>

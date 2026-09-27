@@ -20,6 +20,18 @@ export const initialsOf = (name: string): string =>
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
 
+/** Email harus punya nama lokal, nama domain, dan titik di akhir. "a@b" ditolak. */
+export const isEmail = (value: string): boolean =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
+/** Nomor HP Indonesia: 62/0 + 8–13 digit, spasi dan tanda hubung diabaikan. */
+export const isPhone = (value: string): boolean =>
+  /^(\+?62|0)\d{8,13}$/.test(value.replace(/[\s-]/g, ''));
+
+/** Jam lokal "08:30", dipakai stempel waktu chat. */
+export const jam = (date = new Date()): string =>
+  `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
 export const greetingOf = (date = new Date()): string => {
   const hour = date.getHours();
   if (hour < 11) return 'Selamat pagi';

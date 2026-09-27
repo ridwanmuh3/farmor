@@ -31,7 +31,7 @@ describe('render halaman dasar', () => {
 
   it('login menampilkan tautan lupa kata sandi', async () => {
     renderAt('/login');
-    expect(await screen.findByText('Lupa kata sandi?')).toBeTruthy();
+    expect(await screen.findByText('Lupa Kata Sandi?')).toBeTruthy();
   });
 
   it('keranjang kosong menampilkan empty state', async () => {

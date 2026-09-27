@@ -33,6 +33,7 @@ interface ShopState {
 const ShopContext = createContext<ShopState | null>(null);
 
 export const PROMO_CODE = 'PANEN10';
+export const PROMO_RATE = 0.1;
 
 export const ShopProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User>(() => userRepo.get());
@@ -41,7 +42,6 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
   const [addresses, setAddresses] = useState<Address[]>(() => addressRepo.get());
   const [addressId, setAddressId] = useState<string>(() => addressRepo.get()[0]?.id ?? '');
   const [promo, setPromo] = useState('');
-  const [discount, setDiscount] = useState(0);
   const [wishlist, setWishlist] = useState<string[]>(() => wishlistRepo.get());
 
   useEffect(() => {
@@ -50,6 +50,12 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo<ShopState>(() => {
     const address = addresses.find((a) => a.id === addressId) ?? addresses[0];
+
+    // Diskon diturunkan dari keranjang terkini, bukan dikunci saat kode dipakai,
+    // supaya keranjang yang berubah tidak membuat potongan salah.
+    const discount = promo
+      ? Math.round(buildCheckoutPreview(cart, productRepo.all()).subtotal * PROMO_RATE)
+      : 0;
 
     return {
       user,
@@ -89,31 +95,25 @@ export const ShopProvider = ({ children }: { children: ReactNode }) => {
       },
       applyPromo: (code) => {
         const valid = code.trim().toUpperCase() === PROMO_CODE;
-        const sub = buildCheckoutPreview(cart, productRepo.all()).orders.reduce(
-          (sum, o) => sum + o.subtotal,
-          0,
-        );
         setPromo(valid ? PROMO_CODE : '');
-        setDiscount(valid ? Math.round(sub * 0.1) : 0);
         return valid;
       },
-      removePromo: () => {
-        setPromo('');
-        setDiscount(0);
-      },
+      removePromo: () => setPromo(''),
       checkout: (method) => {
         const result = orderRepo.checkout(cart, address, method, discount);
+        // Checkout gagal = tidak ada pesanan terbentuk. Keranjang dan promo
+        // dibiarkan supaya pembeli bisa memperbaiki lalu mencoba lagi.
+        if (result.orders.length === 0) return result.orders;
         setOrders(orderRepo.get());
         setCart([]);
         setPromo('');
-        setDiscount(0);
         return result.orders;
       },
       setOrderStatus: (id, status) => setOrders(orderRepo.setStatus(id, status)),
       wishlist,
       toggleWish: (productId) => setWishlist(wishlistRepo.toggle(productId)),
     };
-  }, [user, cart, orders, addresses, addressId, promo, discount, wishlist]);
+  }, [user, cart, orders, addresses, addressId, promo, wishlist]);
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
 };

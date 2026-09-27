@@ -1,17 +1,20 @@
 import { IonContent, IonPage } from '@ionic/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useHistory } from '../router';
 import { rupiah } from '../../core/entities/format';
 import { productRepo } from '../../data/repositories';
 import { useShop } from '../components/ShopProvider';
 import { buildCheckoutPreview } from '../components/selectors';
 import { canCheckout } from '../../core/services/inventory';
-import { Btn, Empty, QtyStepper, Thumb } from '../components/ui';
+import { Btn, Confirm, Empty, QtyStepper, Thumb } from '../components/ui';
 
 export const Cart = () => {
   const history = useHistory();
-  const { cart, setQty, removeFromCart, clearCart, discount } = useShop();
+  const { cart, setQty, removeFromCart, clearCart, discount, applyPromo, promo } = useShop();
   const [confirmClear, setConfirmClear] = useState(false);
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const codeRef = useRef<HTMLInputElement>(null);
 
   const preview = buildCheckoutPreview(cart, productRepo.all(), discount);
   const empty = preview.orders.length === 0;
@@ -20,40 +23,32 @@ export const Cart = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen style={{ '--background': 'var(--ff-surface)' }}>
+      <IonContent fullscreen role="main" style={{ '--background': 'var(--ff-surface)' }}>
         <div className="ff-screen" style={{ paddingTop: 16 }}>
           <div className="ff-row">
-            <h1 className="ff-title">Keranjang</h1>
+            <h1 className="ff-title">Keranjang Saya</h1>
             {!empty ? (
               <button
                 type="button"
                 onClick={() => setConfirmClear(true)}
-                style={{ background: 'none', border: 'none', color: 'var(--ff-danger)', fontWeight: 600, minHeight: 44 }}
+                style={{ background: 'none', border: 'none', color: 'var(--ff-primary-text)', fontWeight: 600, minHeight: 44 }}
               >
                 Hapus Semua
               </button>
             ) : null}
           </div>
 
-          {confirmClear ? (
-            <div className="ff-card" style={{ marginTop: 12, borderColor: 'var(--ff-danger)' }}>
-              <p style={{ margin: 0, fontWeight: 700 }}>Hapus semua item?</p>
-              <p className="ff-muted" style={{ fontSize: 13, margin: '4px 0 12px' }}>
-                Semua produk di keranjang akan hilang.
-              </p>
-              <div className="ff-row" style={{ gap: 8 }}>
-                <Btn variant="ghost" onClick={() => setConfirmClear(false)}>Batal</Btn>
-                <Btn
-                  onClick={() => {
-                    clearCart();
-                    setConfirmClear(false);
-                  }}
-                >
-                  Ya, Hapus
-                </Btn>
-              </div>
-            </div>
-          ) : null}
+          <Confirm
+            open={confirmClear}
+            title="Hapus semua item?"
+            note="Semua produk di keranjang akan hilang."
+            confirmLabel="Ya, Hapus"
+            onClose={() => setConfirmClear(false)}
+            onConfirm={() => {
+              clearCart();
+              setConfirmClear(false);
+            }}
+          />
 
           {empty ? (
             <Empty title="Keranjang masih kosong" note="Yuk cari hasil tani segar di katalog." />
@@ -100,7 +95,7 @@ export const Cart = () => {
                               style={{
                                 background: 'none',
                                 border: 'none',
-                                color: 'var(--ff-danger)',
+                                color: 'var(--ff-primary-text)',
                                 fontWeight: 600,
                                 minHeight: 44,
                               }}
@@ -116,6 +111,48 @@ export const Cart = () => {
               ))}
 
               <div className="ff-card" style={{ marginTop: 12 }}>
+                <div className="ff-row" style={{ marginBottom: 12, gap: 8 }}>
+                  <input
+                    className="ff-input"
+                    ref={codeRef}
+                    style={{ flex: 1 }}
+                    placeholder="Punya kode promo tani?"
+                    aria-label="Kode promo"
+                    value={code}
+                    onChange={(e) => {
+                      setCode(e.target.value);
+                      setCodeError('');
+                    }}
+                    aria-invalid={Boolean(codeError)}
+                    aria-describedby={codeError ? 'cart-code-error' : undefined}
+                  />
+                  <button
+                    type="button"
+                    className="ff-btn"
+                    style={{ width: 'auto', padding: '0 18px', minHeight: 44 }}
+                    onClick={() => {
+                      if (applyPromo(code)) {
+                        setCode('');
+                        setCodeError('');
+                      } else {
+                        setCodeError('Kode promo tidak dikenal.');
+                        codeRef.current?.focus();
+                      }
+                    }}
+                  >
+                    Terapkan
+                  </button>
+                </div>
+                {codeError ? (
+                  <p id="cart-code-error" role="alert" style={{ color: 'var(--ff-danger)', fontSize: 12, margin: '0 0 8px' }}>
+                    {codeError}
+                  </p>
+                ) : null}
+                {promo ? (
+                  <p role="status" style={{ color: 'var(--ff-success)', fontSize: 12, margin: '0 0 8px' }}>
+                    Kode {promo} dipakai.
+                  </p>
+                ) : null}
                 <div className="ff-row">
                   <span className="ff-muted">Subtotal ({preview.qty} item)</span>
                   <span style={{ fontWeight: 600 }}>{rupiah(preview.subtotal)}</span>
@@ -133,7 +170,7 @@ export const Cart = () => {
                 <div className="ff-divider" />
                 <div className="ff-row">
                   <span style={{ fontWeight: 700 }}>Total</span>
-                  <span style={{ fontWeight: 700, color: 'var(--ff-primary)' }}>{rupiah(preview.total)}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--ff-primary-text)' }}>{rupiah(preview.total)}</span>
                 </div>
               </div>
 

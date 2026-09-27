@@ -19,7 +19,7 @@ export const BuyerTabs = () => (
       <Route index element={<Navigate to="/tabs/home" replace />} />
     </IonRouterOutlet>
 
-    <IonTabBar slot="bottom">
+    <IonTabBar slot="bottom" role="navigation" aria-label="Navigasi utama">
       <IonTabButton tab="home" href="/tabs/home">
         <Home {...icon} />
         <span className="ff-tab-label">Beranda</span>
@@ -52,7 +52,7 @@ export const SellerTabs = () => (
       <Route index element={<Navigate to="/seller/dashboard" replace />} />
     </IonRouterOutlet>
 
-    <IonTabBar slot="bottom">
+    <IonTabBar slot="bottom" role="navigation" aria-label="Navigasi utama">
       <IonTabButton tab="dashboard" href="/seller/dashboard">
         <LayoutDashboard {...icon} />
         <span className="ff-tab-label">Dasbor</span>

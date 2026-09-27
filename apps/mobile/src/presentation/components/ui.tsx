@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 export const Btn = ({
   children,
@@ -27,7 +27,7 @@ export const Chip = ({
 export const Badge = ({ children, tone = 'soft' }: { children: ReactNode; tone?: 'soft' | 'solid' | 'amber' | 'info' }) => {
   const tones: Record<string, [string, string]> = {
     soft: ['var(--ff-primary-soft)', 'var(--ff-primary-dark)'],
-    solid: ['var(--ff-primary)', '#ffffff'],
+    solid: ['var(--ff-primary-strong)', 'var(--ff-on-primary)'],
     amber: ['var(--ff-amber-soft)', 'var(--ff-amber)'],
     info: ['var(--ff-info-soft)', 'var(--ff-info)'],
   };
@@ -87,6 +87,7 @@ export const QtyStepper = ({
       aria-label="Kurangi jumlah"
       onClick={() => onChange(Math.max(1, qty - 1))}
       disabled={qty <= 1}
+      style={{ minWidth: 44 }}
     >
       −
     </button>
@@ -97,15 +98,93 @@ export const QtyStepper = ({
       aria-label="Tambah jumlah"
       onClick={() => onChange(Math.min(max, qty + 1))}
       disabled={qty >= max}
+      style={{ minWidth: 44 }}
     >
       +
     </button>
   </div>
 );
 
+/**
+ * Konfirmasi dalam kartu, bukan dialog modal: tidak ada overlay yang
+ * memblokir layar, dan tombol Batal selalu dijangkau ibu jari.
+ */
+export const Confirm = ({
+  open,
+  title,
+  note,
+  confirmLabel = 'Ya, Lanjutkan',
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  note?: string;
+  confirmLabel?: string;
+  onConfirm: () => void;
+  onClose: () => void;
+}) => {
+  if (!open) return null;
+  return (
+    <div className="ff-card" style={{ marginTop: 12, borderColor: 'var(--ff-danger)' }} role="alertdialog" aria-label={title}>
+      <p style={{ margin: 0, fontWeight: 700 }}>{title}</p>
+      {note ? (
+        <p className="ff-muted" style={{ fontSize: 13, margin: '4px 0 12px' }}>
+          {note}
+        </p>
+      ) : null}
+      <div className="ff-row" style={{ gap: 8 }}>
+        <Btn variant="ghost" onClick={onClose}>
+          Batal
+        </Btn>
+        <Btn onClick={onConfirm}>{confirmLabel}</Btn>
+      </div>
+    </div>
+  );
+};
+
+/** Tombol yang meminta konfirmasi sekali sebelum menjalankan aksi. */
+export const ConfirmBtn = ({
+  children,
+  title,
+  note,
+  confirmLabel = 'Ya, Lanjutkan',
+  onConfirm,
+  ...rest
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  title: string;
+  note?: string;
+  confirmLabel?: string;
+  variant?: 'solid' | 'ghost';
+  onConfirm: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const { variant, ...btnProps } = rest;
+  return (
+    <>
+      <Btn {...btnProps} variant={variant} onClick={() => setOpen(true)}>
+        {children}
+      </Btn>
+      <Confirm
+        open={open}
+        title={title}
+        note={note}
+        confirmLabel={confirmLabel}
+        onClose={() => setOpen(false)}
+        onConfirm={() => {
+          setOpen(false);
+          onConfirm();
+        }}
+      />
+    </>
+  );
+};
+
 export const Thumb = ({ src, size = 64, radius = 16 }: { src: string; size?: number; radius?: number }) => (
   <img
     className="ff-thumb"
+    loading="lazy"
+    decoding="async"
     src={src}
     alt=""
     width={size}

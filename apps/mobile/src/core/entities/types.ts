@@ -22,6 +22,8 @@ export interface User {
 export interface Seller {
   id: string;
   name: string;
+  /** Nama orang di balik toko, dipakai di kartu penjual dan chat. */
+  owner: string;
   city: string;
   avatar?: string;
   rating: number;
@@ -40,6 +42,8 @@ export interface Product {
   image: string;
   description: string;
   sold: number;
+  /** Jumlah ulasan pembeli, tampil di halaman detail. */
+  reviews: number;
 }
 
 export interface CartItem {
@@ -96,6 +100,14 @@ export interface CheckoutResult {
 export interface TrackStep {
   label: string;
   note: string;
+  at: string;
+}
+
+export interface ChatBubble {
+  id: string;
+  from: 'seller' | 'me';
+  text: string;
+  /** Stempel waktu lokal "HH:MM" dari jam device. */
   at: string;
 }
 
